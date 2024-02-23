@@ -9,4 +9,6 @@ class Discriminator:
     def estimate(self, image):
         image = np.array([image])
         estimate = self.model.predict(image)
-        return estimate
+        return estimate[0][0]
+
+discriminator = Discriminator()

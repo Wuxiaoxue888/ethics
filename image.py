@@ -1,5 +1,6 @@
 import numpy as np
 import random
+from discriminator import discriminator
 
 N_GENES = 784
 CHROMOSOME_SIZE = 256
@@ -10,7 +11,7 @@ class Image:
         if chromosome is None:
             self.chromosome = np.random.randint(0, 256, size=784)
         else:
-            self.chromosome = chromosome
+            self.chromosome = np.array(chromosome)
 
         self.fitness = 0
 
@@ -21,4 +22,8 @@ class Image:
     # is created. For now lets keep it simple
     def compute_fitness(self):
         # TODO ask model about the fitness
-        self.fitness = random.random()
+        x = discriminator.estimate(self.chromosome)
+        if x > 0:
+            print(self.chromosome)
+        self.fitness = x
+        
