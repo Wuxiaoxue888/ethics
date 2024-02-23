@@ -15,5 +15,6 @@ struct Population {
 
 void initializePopulation(struct Population *p);
 void printPopulation(struct Population *p);
+void freePopulation(struct Population *p);
 
 #endif

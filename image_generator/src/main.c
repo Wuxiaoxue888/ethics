@@ -9,4 +9,5 @@ int main(void) {
   struct Population p;
   initializePopulation(&p);
   printPopulation(&p);
+  freePopulation(&p);
 }
