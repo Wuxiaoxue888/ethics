@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <time.h>
 
-int main(int argc, char *argv[]) {
+int main(void) {
   srand(time(NULL));
 
   struct Population p;
