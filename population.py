@@ -60,36 +60,39 @@ class Population:
         for i in range(1, n_offsprings, 2):
             parent_1 = parents[i - 1]
             parent_2 = parents[i]
-            offspring_a, offspring_b = self._crossover(parent_1, parent_2)
+            if random.choice([True, False]):
+                offspring_a, offspring_b = self._crossover_horizontally(parent_1, parent_2)
+            else:
+                offspring_a, offspring_b = self._crossover_vertically(parent_1, parent_2)
 
             self._mutate(offspring_a)
             self._mutate(offspring_b)
 
             im_len = len(self.images) - 1
             self.images[im_len - (i - 1)] = offspring_a
-            self.images[im_len - i] = offspring_b
-    
-    """
-    _crossover creates two children by combining parts of the two parents
-        Splits the parents either horizontally or vertically
-    """
-    def _crossover(self, parent_1, parent_2):
-        horizontal_split = True if random.choice([True, False]) else False
+            self.images[im_len - i] = offspring_b 
+
+    # returns two children after crossing over given parents chromosomes horizontally
+    def _crossover_horizontally(self, parent_1, parent_2):
         split_point = int(N_GENES / 2)
-        if horizontal_split:
-            offspring_a = Image(chromosome=np.concatenate(
-                [parent_1.chromosome[:split_point], parent_2.chromosome[split_point:]]))
-            offspring_b = Image(chromosome=np.concatenate(
-                [parent_2.chromosome[:split_point], parent_1.chromosome[split_point:]]))
-        else:
-            offspring_a = Image(chromosome=np.concatenate(
-                [parent_1.chromosome.reshape((28, 28)).T.flatten()[:split_point],
-                 parent_2.chromosome.reshape((28, 28)).T.flatten()[split_point:]
-                 ]).reshape((28, 28)).T.flatten())
-            offspring_b = Image(chromosome=np.concatenate(
-                [parent_2.chromosome.reshape((28, 28)).T.flatten()[:split_point],
-                 parent_1.chromosome.reshape((28, 28)).T.flatten()[split_point:]
-                 ]).reshape((28, 28)).T.flatten())
+        offspring_a = Image(chromosome=np.concatenate(
+            [parent_1.chromosome[:split_point], parent_2.chromosome[split_point:]]))
+        offspring_b = Image(chromosome=np.concatenate(
+            [parent_2.chromosome[:split_point], parent_1.chromosome[split_point:]]))
+
+        return offspring_a, offspring_b
+    
+    # returns two children after crossing over given parents chromosomes vertically
+    def _crossover_vertically(self, parent_1, parent_2):
+        split_point = int(N_GENES / 2)
+        offspring_a = Image(chromosome=np.concatenate(
+            [parent_1.chromosome.reshape((28, 28)).T.flatten()[:split_point],
+                parent_2.chromosome.reshape((28, 28)).T.flatten()[split_point:]
+                ]).reshape((28, 28)).T.flatten())
+        offspring_b = Image(chromosome=np.concatenate(
+            [parent_2.chromosome.reshape((28, 28)).T.flatten()[:split_point],
+                parent_1.chromosome.reshape((28, 28)).T.flatten()[split_point:]
+                ]).reshape((28, 28)).T.flatten())
 
         return offspring_a, offspring_b
     
