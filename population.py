@@ -58,18 +58,44 @@ class Population:
             raise Exception("Invalid selection function")
 
         for i in range(1, n_offsprings, 2):
-            split_point = int(N_GENES / 2)
-            offspring_a = Image(chromosome=np.concatenate(
-                [parents[i - 1].chromosome[:split_point], parents[i].chromosome[split_point:]]))
-            offspring_b = Image(chromosome=np.concatenate(
-                [parents[i].chromosome[:split_point], parents[i - 1].chromosome[split_point:]]))
+            parent_1 = parents[i - 1]
+            parent_2 = parents[i]
+            if random.choice([True, False]):
+                offspring_a, offspring_b = self._crossover_horizontally(parent_1, parent_2)
+            else:
+                offspring_a, offspring_b = self._crossover_vertically(parent_1, parent_2)
 
             self._mutate(offspring_a)
             self._mutate(offspring_b)
 
             im_len = len(self.images) - 1
             self.images[im_len - (i - 1)] = offspring_a
-            self.images[im_len - i] = offspring_b
+            self.images[im_len - i] = offspring_b 
+
+    # returns two children after crossing over given parents chromosomes horizontally
+    def _crossover_horizontally(self, parent_1, parent_2):
+        split_point = int(N_GENES / 2)
+        offspring_a = Image(chromosome=np.concatenate(
+            [parent_1.chromosome[:split_point], parent_2.chromosome[split_point:]]))
+        offspring_b = Image(chromosome=np.concatenate(
+            [parent_2.chromosome[:split_point], parent_1.chromosome[split_point:]]))
+
+        return offspring_a, offspring_b
+    
+    # returns two children after crossing over given parents chromosomes vertically
+    def _crossover_vertically(self, parent_1, parent_2):
+        split_point = int(N_GENES / 2)
+        offspring_a = Image(chromosome=np.concatenate(
+            [parent_1.chromosome.reshape((28, 28)).T.flatten()[:split_point],
+                parent_2.chromosome.reshape((28, 28)).T.flatten()[split_point:]
+                ]).reshape((28, 28)).T.flatten())
+        offspring_b = Image(chromosome=np.concatenate(
+            [parent_2.chromosome.reshape((28, 28)).T.flatten()[:split_point],
+                parent_1.chromosome.reshape((28, 28)).T.flatten()[split_point:]
+                ]).reshape((28, 28)).T.flatten())
+
+        return offspring_a, offspring_b
+    
     """
     _mutate mutates the offspring.
         It works by changing the value of random pixel in the image,
@@ -114,22 +140,25 @@ class Population:
         """
 
         winners: list[Image] = []
-        selected: list[int] = []
+        winners_indexes: list[int] = []
 
         for _ in range(n_parents):
             best_fitness = 0
             best_solution = None
             for _ in range(tournament_size):
                 participant_index = random.randint(0, len(self.images) - 1)
-                participant = self.images[participant_index]
 
-                if not with_replacement and participant_index in selected:
-                    continue
+                while not with_replacement and participant_index in winners_indexes: # needs to loop until a valid participant is chosen
+                    participant_index = random.randint(0, len(self.images) - 1)
+                
+                participant = self.images[participant_index]
 
                 if participant.fitness >= best_fitness:
                     best_fitness = participant.fitness
                     best_solution = participant
+                    best_index = participant_index
 
             winners.append(best_solution)
+            winners_indexes.append(best_index)
 
         return winners
