@@ -140,25 +140,25 @@ class Population:
         """
 
         winners: list[Image] = []
-        selected: list[int] = []
+        winners_indexes: list[int] = []
 
         for _ in range(n_parents):
             best_fitness = 0
             best_solution = None
             for _ in range(tournament_size):
                 participant_index = random.randint(0, len(self.images) - 1)
-                participant = self.images[participant_index]
 
-                while not with_replacement and participant_index in selected: # needs to loop until a valid participent is chosen
+                while not with_replacement and participant_index in winners_indexes: # needs to loop until a valid participant is chosen
                     participant_index = random.randint(0, len(self.images) - 1)
-                    participant = self.images[participant_index]
+                
+                participant = self.images[participant_index]
 
                 if participant.fitness >= best_fitness:
                     best_fitness = participant.fitness
                     best_solution = participant
-                    best_index = participant_index # save the index of the chosen participent
+                    best_index = participant_index
 
             winners.append(best_solution)
-            selected.append(best_index) # add the chosen index to selected
+            winners_indexes.append(best_index)
 
         return winners
