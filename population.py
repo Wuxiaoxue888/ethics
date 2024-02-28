@@ -64,9 +64,32 @@ class Population:
             offspring_b = Image(chromosome=np.concatenate(
                 [parents[i].chromosome[:split_point], parents[i - 1].chromosome[split_point:]]))
 
+            self._mutate(offspring_a)
+            self._mutate(offspring_b)
+
             im_len = len(self.images) - 1
             self.images[im_len - (i - 1)] = offspring_a
             self.images[im_len - i] = offspring_b
+    """
+    _mutate mutates the offspring.
+        It works by changing the value of random pixel in the image,
+        and then moving with a probability to any of the 4 adjacent pixels and updating that one etc ....
+    """
+    def _mutate(self, offspring):
+        index = np.random.randint(4, 24) * 28 + np.random.randint(4, 24) # a random pixel somewhat in the middle of the image
+        pixel_change = np.random.randint(-255, 255) / 255. # the amount the pixel value will change
+        p = np.random.random() # probability of moving to a pixel to the left or right, (1-p) is up or down
+        probabilities = [p, 1-p]
+        directions = [random.choice([-1, 1]) * 1,random.choice([-1, 1]) * 28] # the directions are left/right (-1, 1) and up/down (-28, 28) 
+        for _ in range(np.random.randint(6, 15)): # number of pixels to be updated
+            pixel_change += random.choice([-1, 1]) * np.random.random() / 20 # the pixel change is a bit different for each pixel
+            new_pixel_value = offspring.chromosome[index] + pixel_change # the new pixel value
+            if new_pixel_value > 0 and new_pixel_value < 1: # check that the new pixel value is between 0 and 1
+                offspring.chromosome[index] = new_pixel_value # change the value of the pixel
+            direction = np.random.choice(directions, p=probabilities) # choose a direction (left/right or up/down)
+            new_index = index + direction # index of the next pixel to be updated
+            if new_index >= 0 and new_index < 784: # check that it is not out of bounds
+                index = new_index
 
     def _select_top_n(self, n_parents: int = 10) -> list[Image]:
         """
