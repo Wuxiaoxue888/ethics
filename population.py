@@ -31,7 +31,7 @@ class Population:
     """
     selection_function has to be one of:
     """
-    VALID_SELECTION_FUNCTIONS = ["top_n", "tournament"]
+    VALID_SELECTION_FUNCTIONS = ["top_n", "tournament","roulette_wheel"]
 
     def create_offsprings(self, n_offsprings: int, n_parents: int, selection_function: str = "top_n", **kwargs) -> None:
         """
@@ -53,6 +53,9 @@ class Population:
             tournament_size = kwargs.get("tournament_size", 3)
             tournament_replacement = kwargs.get("tournament_replacement", True)
             parents = self._tournament(tournament_size, n_parents, with_replacement=tournament_replacement)
+        elif selection_function == "roulette_wheel":
+            n_parents = kwargs.get("n_participants", 10)
+            parents = self._roulette_wheel_selection(n_parents=n_parents)
         else:
             raise Exception("Invalid selection function")
 
@@ -161,6 +164,21 @@ class Population:
             winners_indexes.append(best_index)
 
         return winners
+
+    def _roulette_wheel_selection(self, n_parents):
+        total_fitness = sum(image.fitness for image in self.images)
+        selection_probs = [image.fitness / total_fitness for image in self.images]
+        return np.random.choice(self.images, n_parents, p=selection_probs)
+
+    def _multi_point_crossover(self, parent1, parent2, points=4):
+        crossover_points = sorted(np.random.choice(range(1, N_GENES), points - 1, replace=False))
+        child_chromosome = np.array(parent1.chromosome)
+        for i, point in enumerate(crossover_points):
+            if i % 2 == 0:
+                child_chromosome[point:] = parent2.chromosome[point:]
+            else:
+                child_chromosome[point:] = parent1.chromosome[point:]
+        return Image(chromosome=child_chromosome)
 
     def export_to_csv(self, file_name):
         with open(file_name, 'w', newline='') as file:
