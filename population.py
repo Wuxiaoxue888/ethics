@@ -1,11 +1,10 @@
-from typing import List, Any
-
 from image import Image, N_GENES
 import operator
 import random
 import numpy as np
 import pandas as pd
 from discriminator import discriminator
+import csv
 
 
 class Population:
@@ -162,3 +161,12 @@ class Population:
             winners_indexes.append(best_index)
 
         return winners
+
+    def export_to_csv(self, file_name):
+        with open(file_name, 'w', newline='') as file:
+            writer = csv.writer(file)
+            column_names = [i for i in range(784)]
+
+            writer.writerow(column_names)
+            for image in self.images:
+                writer.writerow(list(image.chromosome))
