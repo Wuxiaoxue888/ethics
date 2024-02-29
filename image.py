@@ -4,10 +4,10 @@ import random
 N_GENES = 784
 CHROMOSOME_SIZE = 256
 
-P_TURN_WHITE = 0.01
-P_TURN_WHITE_ADJACENT = 0.50
+P_TURN_WHITE = 0.001
+P_TURN_WHITE_ADJACENT = 0.15
 
-IMAGE_WIDTH, IMAGE_HEIGHT = 28, 28
+IMAGE_WIDTH, IMAGE_HEIGHT, IMAGE_CENTER = 28, 28, 14
 
 
 class Image:
@@ -20,7 +20,12 @@ class Image:
                         self.chromosome[i, j] = np.random.randint(1, 256, size=1) / 255
                         continue
 
-                    if self._turn_pixel_white(P_TURN_WHITE):
+                    # increase the probability of a black pixel becoming white the closer we are to the center of the
+                    # image
+                    distance_to_center = np.sqrt((i - IMAGE_CENTER) ** 2 + (j - IMAGE_CENTER) ** 2)
+                    probability = P_TURN_WHITE * distance_to_center
+
+                    if self._turn_pixel_white(probability):
                         self.chromosome[i, j] = np.random.randint(1, 256, size=1) / 255
 
             self.chromosome = self.chromosome.flatten()
