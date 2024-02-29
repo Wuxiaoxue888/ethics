@@ -35,12 +35,25 @@ class Image:
         self.fitness = np.float32(0)
 
     def _has_adjacent_white_pixels(self, i: int, j: int) -> bool:
+        """
+        _has_adjacent_white_pixels checks whether a pixel at coordinates [i,j] has any non-black neighboring pixels.
+
+        Note: A fancy algorith for searching might be used but in a limited constant search space like ours (28x28
+        looking only at the neighbours), this should be good enough. Also, this code only runs during the initialization
+        of the population, so it does not slow down the algorithm during generating at all.
+
+        :param i: coordinate x
+        :param j: coordinate y
+        :return: True or False depending on whether a pixel has a neighboring white pixel
+        """
+        height, width = self.chromosome.shape
+
         # west
         if j > 0 and self.chromosome[i, j - 1] > 0:
             return True
 
         # east
-        if j < IMAGE_WIDTH - 1 and self.chromosome[i, j + 1] > 0:
+        if j < width - 1 and self.chromosome[i, j + 1] > 0:
             return True
 
         # north
@@ -48,7 +61,23 @@ class Image:
             return True
 
         # south
-        if i < IMAGE_HEIGHT - 1 and self.chromosome[i + 1, j] > 0:
+        if i < height - 1 and self.chromosome[i + 1, j] > 0:
+            return True
+
+        # north-east
+        if i > 0 and j < width - 1 and self.chromosome[i - 1, j + 1] > 0:
+            return True
+
+        # south-east
+        if i < height - 1 and j < width - 1 and self.chromosome[i + 1, j + 1] > 0:
+            return True
+
+        # north-west
+        if i > 0 and j > 0 and self.chromosome[i - 1, j - 1] > 0:
+            return True
+
+        # south-west
+        if i < height - 1 and j > 0 and self.chromosome[i + 1, j - 1] > 0:
             return True
 
         return False
