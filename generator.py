@@ -6,27 +6,32 @@ from discriminator import discriminator
 def main():
     generated_images = []
     population = Population()
-    for generation in range(1, 501):
-        #population.print()
-        print(f"-----------------Generation {generation}-----------------------")
-        population.order_by_fitness()
-        #population.print()
-        #print("---------------------------------------")
-        population.create_offsprings(10, 10, selection_function="tournament", tournament_replacement=False)
-        #population.print()
-        #print("---------------------------------------")
-        #population.print()
-        if generation % 10 == 0: # save generated images
-            generated_images.append([image.chromosome for image in population.images[:10]])
+    generations_before_training_again = 30
+    for generation in range(1, 11):
 
-        if generation % 100 == 0: # train the network more every 100 generations
-            generated_images_1d_array = np.array(generated_images).reshape(np.array(generated_images).shape[0]*np.array(generated_images).shape[1],784)
-            last_generated_images = generated_images_1d_array[-1000:]
-            discriminator.train(last_generated_images)
+        if generation % 10 == 0:
+            print(f"-----------------Generation {generation}-----------------------")
+
+        population.order_by_fitness()
+
+        generations_before_training_again -= 1
+        if population.is_fit() and generations_before_training_again < 0 and len(generated_images) > 2000:
+            discriminator.train(list(map(lambda image: image.chromosome, generated_images[-2000:])))
+            generations_before_training_again = 64
+
+        population.create_offsprings(20, 20, selection_function="roulette_wheel", tournament_replacement=False)
+
+        for image in population.images:
+            generated_images.append(image)
+        generated_images = generated_images[-25_000:]
+
 
     population.print()
 
-    np.save("generated_images", np.array(generated_images))
+    # Save the generated images
+    population.images = generated_images[-25_000:]
+    population.order_by_fitness()
+    np.save("generated_images", np.array(list(map(lambda image: image.chromosome, population.images))))
 
 if __name__ == '__main__':
     main()

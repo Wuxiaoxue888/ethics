@@ -1,26 +1,40 @@
 from typing import List, Any
-
-from image import Image, N_GENES
 import operator
 import random
 import numpy as np
 import pandas as pd
-from discriminator import discriminator
 
+from image import Image
+from discriminator import discriminator
+from mutate import mutate
+
+REAL_IMAGES = pd.read_csv("real_images.csv") / 255.
 
 class Population:
-    def __init__(self, size=33, doping_size=10):
-        self.images = [Image() for _ in range(size - doping_size)]
+    def __init__(self, size=256):
+        self.images = [Image() for _ in range(size)]
+        self.dope()
 
-        # Dope population with a few good images
-        if doping_size > 0:
-            real_images_df = pd.read_csv("real_images.csv")[:doping_size] / 255.
-            doping_images = list(map(lambda x: Image(chromosome=x), real_images_df.values))
-            self.images += doping_images
+    def dope(self, doping_size=16):
+        """
+        Replaces images in the population with real images
+        """
+        doping_images = [Image(chromosome=REAL_IMAGES.iloc[np.random.randint(0, len(REAL_IMAGES)-1)].values) for _ in range(doping_size)]
+        self.images = self.images[:-doping_size]
+        self.images += doping_images
 
     def print(self):
         for image in self.images:
             print(image)
+
+    def is_fit(self):
+        """
+        Checks if many of the images in the population have a high fitness
+        """
+        for image in self.images[:int(len(self.images)/2)]:
+            if image.fitness < 0.85:
+                return False
+        return True
 
     def order_by_fitness(self):
         chromosomes = np.array(list(map(lambda image: image.chromosome, self.images)))
@@ -54,68 +68,56 @@ class Population:
             tournament_size = kwargs.get("tournament_size", 3)
             tournament_replacement = kwargs.get("tournament_replacement", True)
             parents = self._tournament(tournament_size, n_parents, with_replacement=tournament_replacement)
+        elif selection_function == "roulette_wheel":
+            parents = self._roulette_wheel_selection(n_parents)
         else:
             raise Exception("Invalid selection function")
 
         for i in range(1, n_offsprings, 2):
             parent_1 = parents[i - 1]
             parent_2 = parents[i]
-            if random.choice([True, False]):
-                offspring_a, offspring_b = self._crossover_horizontally(parent_1, parent_2)
-            else:
-                offspring_a, offspring_b = self._crossover_vertically(parent_1, parent_2)
+            offspring_a, offspring_b = self._crossover(parent_1, parent_2)
 
-            self._mutate(offspring_a)
-            self._mutate(offspring_b)
+            mutate(offspring_a)
+            mutate(offspring_b)
 
             im_len = len(self.images) - 1
             self.images[im_len - (i - 1)] = offspring_a
             self.images[im_len - i] = offspring_b 
 
-    # returns two children after crossing over given parents chromosomes horizontally
-    def _crossover_horizontally(self, parent_1, parent_2):
-        split_point = int(N_GENES / 2)
-        offspring_a = Image(chromosome=np.concatenate(
-            [parent_1.chromosome[:split_point], parent_2.chromosome[split_point:]]))
-        offspring_b = Image(chromosome=np.concatenate(
-            [parent_2.chromosome[:split_point], parent_1.chromosome[split_point:]]))
+    def _crossover(self, parent_1, parent_2):
+        """
+        Checks all possible splits both horizontally and vertically and chooses the best one
+        Splits the parents in two parts, combines one part from each parent, and returns them as offsprings
+        """
+        parent_1 = parent_1.chromosome.reshape((28, 28))
+        parent_2 = parent_2.chromosome.reshape((28, 28))
 
-        return offspring_a, offspring_b
-    
-    # returns two children after crossing over given parents chromosomes vertically
-    def _crossover_vertically(self, parent_1, parent_2):
-        split_point = int(N_GENES / 2)
-        offspring_a = Image(chromosome=np.concatenate(
-            [parent_1.chromosome.reshape((28, 28)).T.flatten()[:split_point],
-                parent_2.chromosome.reshape((28, 28)).T.flatten()[split_point:]
-                ]).reshape((28, 28)).T.flatten())
-        offspring_b = Image(chromosome=np.concatenate(
-            [parent_2.chromosome.reshape((28, 28)).T.flatten()[:split_point],
-                parent_1.chromosome.reshape((28, 28)).T.flatten()[split_point:]
-                ]).reshape((28, 28)).T.flatten())
-
-        return offspring_a, offspring_b
-    
-    """
-    _mutate mutates the offspring.
-        It works by changing the value of random pixel in the image,
-        and then moving with a probability to any of the 4 adjacent pixels and updating that one etc ....
-    """
-    def _mutate(self, offspring):
-        index = np.random.randint(4, 24) * 28 + np.random.randint(4, 24) # a random pixel somewhat in the middle of the image
-        pixel_change = np.random.randint(-255, 255) / 255. # the amount the pixel value will change
-        p = np.random.random() # probability of moving to a pixel to the left or right, (1-p) is up or down
-        probabilities = [p, 1-p]
-        directions = [random.choice([-1, 1]) * 1,random.choice([-1, 1]) * 28] # the directions are left/right (-1, 1) and up/down (-28, 28) 
-        for _ in range(np.random.randint(6, 15)): # number of pixels to be updated
-            pixel_change += random.choice([-1, 1]) * np.random.random() / 20 # the pixel change is a bit different for each pixel
-            new_pixel_value = offspring.chromosome[index] + pixel_change # the new pixel value
-            if new_pixel_value > 0 and new_pixel_value < 1: # check that the new pixel value is between 0 and 1
-                offspring.chromosome[index] = new_pixel_value # change the value of the pixel
-            direction = np.random.choice(directions, p=probabilities) # choose a direction (left/right or up/down)
-            new_index = index + direction # index of the next pixel to be updated
-            if new_index >= 0 and new_index < 784: # check that it is not out of bounds
-                index = new_index
+        best_vertical_split_value = -1
+        best_horizontal_split_value = -1
+        best_vertical_split_index = 14
+        best_horizontal_split_index = 14
+        for i in range(6, 22):
+            vertical_split_value = np.abs(parent_1[:, i] - parent_2[:, i+1]).mean()
+            if vertical_split_value > best_vertical_split_value:
+                best_vertical_split_value = vertical_split_value
+                best_vertical_split_index = i+1
+            horizontal_split_value = np.abs(parent_1[i, :] - parent_2[i+1, :]).mean()
+            if horizontal_split_value > best_horizontal_split_value:
+                best_horizontal_split_value = horizontal_split_value
+                best_horizontal_split_index = i+1
+                
+        offspring_a, offspring_b = parent_1.copy(), parent_2.copy()
+        if best_horizontal_split_value > best_vertical_split_value:
+            # Split horizontally on best_horizontal_split_index
+            offspring_a[:best_horizontal_split_index, :] = parent_2[:best_horizontal_split_index, :]
+            offspring_b[:best_horizontal_split_index, :] = parent_1[:best_horizontal_split_index, :]
+        else:
+            # Split vertically on best_vertical_split_index
+            offspring_a[:, :best_vertical_split_index] = parent_2[:, :best_vertical_split_index]
+            offspring_b[:, :best_vertical_split_index] = parent_1[:, :best_vertical_split_index]
+        
+        return Image(chromosome=offspring_a.flatten()), Image(chromosome=offspring_b.flatten())
 
     def _select_top_n(self, n_parents: int = 10) -> list[Image]:
         """
@@ -162,3 +164,8 @@ class Population:
             winners_indexes.append(best_index)
 
         return winners
+
+    def _roulette_wheel_selection(self, n_parents):
+        total_fitness = sum(image.fitness for image in self.images)
+        selection_probs = [image.fitness / total_fitness for image in self.images]
+        return np.random.choice(self.images, n_parents, p=selection_probs)
