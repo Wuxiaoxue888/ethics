@@ -16,13 +16,17 @@ class Image:
             self.chromosome = np.zeros([IMAGE_WIDTH, IMAGE_HEIGHT])
             for i in range(IMAGE_WIDTH):
                 for j in range(IMAGE_HEIGHT):
-                    if self._has_adjacent_white_pixels(i, j) and self._turn_pixel_white(P_TURN_WHITE_ADJACENT):
+                    if self._has_adjacent_white_pixels(i, j) and self._turn_pixel_white(
+                        P_TURN_WHITE_ADJACENT
+                    ):
                         self.chromosome[i, j] = np.random.randint(1, 256, size=1) / 255
                         continue
 
                     # increase the probability of a black pixel becoming white the closer we are to the center of the
                     # image
-                    distance_to_center = np.sqrt((i - IMAGE_CENTER) ** 2 + (j - IMAGE_CENTER) ** 2)
+                    distance_to_center = np.sqrt(
+                        (i - IMAGE_CENTER) ** 2 + (j - IMAGE_CENTER) ** 2
+                    )
                     probability = P_TURN_WHITE * distance_to_center
 
                     if self._turn_pixel_white(probability):
@@ -87,5 +91,6 @@ class Image:
         return random.random() < probability
 
     def __repr__(self):
-        return "fitness: {fitness} | chromosome: {chromosome}\n".format(fitness=self.fitness,
-                                                                        chromosome=self.chromosome[:10])
+        return "fitness: {fitness} | chromosome: {chromosome}\n".format(
+            fitness=self.fitness, chromosome=self.chromosome[:10]
+        )
