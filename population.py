@@ -1,11 +1,13 @@
 from typing import List, Any
+from image import Image
 import operator
 import random
 import numpy as np
 import pandas as pd
 
-from image import Image
+from image import Image, N_GENES
 from discriminator import discriminator
+import csv
 from mutate import mutate
 
 REAL_IMAGES = pd.read_csv("real_images.csv") / 255.
@@ -46,7 +48,7 @@ class Population:
     """
     selection_function has to be one of:
     """
-    VALID_SELECTION_FUNCTIONS = ["top_n", "tournament"]
+    VALID_SELECTION_FUNCTIONS = ["top_n", "tournament","roulette_wheel"]
 
     def create_offsprings(self, n_offsprings: int, n_parents: int, selection_function: str = "top_n", **kwargs) -> None:
         """
@@ -106,7 +108,7 @@ class Population:
             if horizontal_split_value > best_horizontal_split_value:
                 best_horizontal_split_value = horizontal_split_value
                 best_horizontal_split_index = i+1
-                
+
         offspring_a, offspring_b = parent_1.copy(), parent_2.copy()
         if best_horizontal_split_value > best_vertical_split_value:
             # Split horizontally on best_horizontal_split_index
@@ -116,7 +118,7 @@ class Population:
             # Split vertically on best_vertical_split_index
             offspring_a[:, :best_vertical_split_index] = parent_2[:, :best_vertical_split_index]
             offspring_b[:, :best_vertical_split_index] = parent_1[:, :best_vertical_split_index]
-        
+
         return Image(chromosome=offspring_a.flatten()), Image(chromosome=offspring_b.flatten())
 
     def _select_top_n(self, n_parents: int = 10) -> list[Image]:
@@ -169,3 +171,22 @@ class Population:
         total_fitness = sum(image.fitness for image in self.images)
         selection_probs = [image.fitness / total_fitness for image in self.images]
         return np.random.choice(self.images, n_parents, p=selection_probs)
+
+    def _multi_point_crossover(self, parent1, parent2, points=4):
+        crossover_points = sorted(np.random.choice(range(1, N_GENES), points - 1, replace=False))
+        child_chromosome = np.array(parent1.chromosome)
+        for i, point in enumerate(crossover_points):
+            if i % 2 == 0:
+                child_chromosome[point:] = parent2.chromosome[point:]
+            else:
+                child_chromosome[point:] = parent1.chromosome[point:]
+        return Image(chromosome=child_chromosome)
+
+    def export_to_csv(self, file_name):
+        with open(file_name, 'w', newline='') as file:
+            writer = csv.writer(file)
+            column_names = [i for i in range(784)]
+
+            writer.writerow(column_names)
+            for image in self.images:
+                writer.writerow(list(image.chromosome))
