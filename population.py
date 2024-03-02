@@ -12,39 +12,49 @@ from mutate import mutate
 
 REAL_IMAGES = pd.read_csv("real_images.csv") / 255.0
 
+"""
+create_offsprings selection_function has to be one of:
+"""
+TOP_N = "top_n"
+TOURNAMENT = "tournament"
+ROULETTE = "roulette_wheel"
+VALID_SELECTION_FUNCTIONS = [TOP_N, TOURNAMENT, ROULETTE]
+
 
 class Population:
-    def __init__(self, size=256):
-        self.images = [Image() for _ in range(size)]
-        self.dope()
+    def __init__(self, size=256, doping_size=16):
+        """
 
-    def dope(self, doping_size=16):
+        :param size: Declares the total size of the population
+        :param doping_size: Declares how many real images will be doped in the population. The total size of population
+        does not change.
         """
-        Replaces images in the population with real images
+        self.images = [Image() for _ in range(size - doping_size)]
+        self._dope(doping_size)
+
+    def _dope(self, doping_size):
         """
-        doping_images = [
-            Image(
-                chromosome=REAL_IMAGES.iloc[
-                    np.random.randint(0, len(REAL_IMAGES) - 1)
-                ].values
+        Dopes population with real images
+        """
+        for _ in range(doping_size):
+            self.images.append(
+                Image(
+                    chromosome=REAL_IMAGES.iloc[
+                        np.random.randint(0, len(REAL_IMAGES) - 1)
+                    ].values
+                )
             )
-            for _ in range(doping_size)
-        ]
-        self.images = self.images[:-doping_size]
-        self.images += doping_images
 
     def print(self):
         for image in self.images:
             print(image)
 
-    def is_fit(self):
+    def average_fitness(self):
         """
-        Checks if many of the images in the population have a high fitness
+        Return the average fitness of the population
         """
-        for image in self.images[: int(len(self.images) / 2)]:
-            if image.fitness < 0.85:
-                return False
-        return True
+
+        return np.average([img.fitness for img in self.images])
 
     def order_by_fitness(self):
         chromosomes = np.array(list(map(lambda image: image.chromosome, self.images)))
@@ -53,17 +63,12 @@ class Population:
             image.fitness = fitness
         self.images.sort(key=operator.attrgetter("fitness"), reverse=True)
 
-    """
-    selection_function has to be one of:
-    """
-    VALID_SELECTION_FUNCTIONS = ["top_n", "tournament", "roulette_wheel"]
-
     def create_offsprings(
-        self,
-        n_offsprings: int,
-        n_parents: int,
-        selection_function: str = "top_n",
-        **kwargs
+            self,
+            n_offsprings: int,
+            n_parents: int,
+            selection_function: str = "top_n",
+            **kwargs
     ) -> None:
         """
         create_offprints MUTATES THE POPULATION (IMAGES) LIST by in place replacing the worst n_offsprings solution with
@@ -82,7 +87,7 @@ class Population:
             parents = self._select_top_n(n_parents=n_parents)
         elif selection_function == "tournament":
             tournament_size = kwargs.get("tournament_size", 3)
-            tournament_replacement = kwargs.get("tournament_replacement", True)
+            tournament_replacement = kwargs.get("tournament_replacement", False)
             parents = self._tournament(
                 tournament_size, n_parents, with_replacement=tournament_replacement
             )
@@ -103,7 +108,8 @@ class Population:
             self.images[im_len - (i - 1)] = offspring_a
             self.images[im_len - i] = offspring_b
 
-    def _crossover(self, parent_1, parent_2):
+    @staticmethod
+    def _crossover(parent_1, parent_2):
         """
         Checks all possible splits both horizontally and vertically and chooses the best one
         Splits the parents in two parts, combines one part from each parent, and returns them as offsprings
@@ -129,23 +135,21 @@ class Population:
         if best_horizontal_split_value > best_vertical_split_value:
             # Split horizontally on best_horizontal_split_index
             offspring_a[:best_horizontal_split_index, :] = parent_2[
-                :best_horizontal_split_index, :
-            ]
+                                                           :best_horizontal_split_index, :
+                                                           ]
             offspring_b[:best_horizontal_split_index, :] = parent_1[
-                :best_horizontal_split_index, :
-            ]
+                                                           :best_horizontal_split_index, :
+                                                           ]
         else:
             # Split vertically on best_vertical_split_index
             offspring_a[:, :best_vertical_split_index] = parent_2[
-                :, :best_vertical_split_index
-            ]
+                                                         :, :best_vertical_split_index
+                                                         ]
             offspring_b[:, :best_vertical_split_index] = parent_1[
-                :, :best_vertical_split_index
-            ]
+                                                         :, :best_vertical_split_index
+                                                         ]
 
-        return Image(chromosome=offspring_a.flatten()), Image(
-            chromosome=offspring_b.flatten()
-        )
+        return Image(chromosome=offspring_a.flatten()), Image(chromosome=offspring_b.flatten())
 
     def _select_top_n(self, n_parents: int = 10) -> list[Image]:
         """
@@ -155,12 +159,11 @@ class Population:
         :return: first n_parents solutions in the self.Images list
         """
         parents = self.images[:n_parents]
-        random.shuffle(parents)
 
         return parents
 
     def _tournament(
-        self, tournament_size: int, n_parents: int, with_replacement: bool = True
+            self, tournament_size: int, n_parents: int, with_replacement: bool = True
     ) -> list[Image]:
         """
         :param tournament_size: declares how many Images will be included in one tournament. Smaller sizes of
@@ -181,7 +184,7 @@ class Population:
                 participant_index = random.randint(0, len(self.images) - 1)
 
                 while (
-                    not with_replacement and participant_index in winners_indexes
+                        not with_replacement and participant_index in winners_indexes
                 ):  # needs to loop until a valid participant is chosen
                     participant_index = random.randint(0, len(self.images) - 1)
 
@@ -202,7 +205,8 @@ class Population:
         selection_probs = [image.fitness / total_fitness for image in self.images]
         return np.random.choice(self.images, n_parents, p=selection_probs)
 
-    def _multi_point_crossover(self, parent1, parent2, points=4):
+    @staticmethod
+    def _multi_point_crossover(parent1, parent2, points=4):
         crossover_points = sorted(
             np.random.choice(range(1, N_GENES), points - 1, replace=False)
         )
@@ -213,12 +217,3 @@ class Population:
             else:
                 child_chromosome[point:] = parent1.chromosome[point:]
         return Image(chromosome=child_chromosome)
-
-    def export_to_csv(self, file_name):
-        with open(file_name, "w", newline="") as file:
-            writer = csv.writer(file)
-            column_names = [i for i in range(784)]
-
-            writer.writerow(column_names)
-            for image in self.images:
-                writer.writerow(list(image.chromosome))
