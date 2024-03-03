@@ -41,7 +41,8 @@ class Population:
                 Image(
                     chromosome=REAL_IMAGES.iloc[
                         np.random.randint(0, len(REAL_IMAGES) - 1)
-                    ].values
+                    ].values,
+                    doped=True
                 )
             )
 

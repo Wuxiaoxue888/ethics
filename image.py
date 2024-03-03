@@ -11,7 +11,7 @@ IMAGE_WIDTH, IMAGE_HEIGHT, IMAGE_CENTER = 28, 28, 14
 
 
 class Image:
-    def __init__(self, chromosome=None):
+    def __init__(self, chromosome=None, doped=False):
         if chromosome is None:
             self.chromosome = np.zeros([IMAGE_WIDTH, IMAGE_HEIGHT])
             for i in range(IMAGE_WIDTH):
@@ -37,6 +37,9 @@ class Image:
             self.chromosome = chromosome
 
         self.fitness = np.float32(0)
+        # we need to mark doped so that we do not set their label as false while retraining discriminators. This would
+        # set the images fitness to 0 even thought that is not true.
+        self.doped = doped
 
     def _has_adjacent_white_pixels(self, i: int, j: int) -> bool:
         """

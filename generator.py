@@ -26,7 +26,7 @@ def main():
                 and population.average_fitness() > RETRAIN_FITNESS
         ):
             discriminator.train(
-                list(map(lambda image: image.chromosome, generated_images))
+                [image.chromosome for image in population.images if not image.doped]
             )
             generated_images = []
 
