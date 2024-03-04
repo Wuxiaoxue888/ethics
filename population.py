@@ -29,7 +29,7 @@ class Population:
         :param doping_size: Declares how many real images will be doped in the population. The total size of population
         does not change.
         """
-        self.images = [Image() for _ in range(size - doping_size)]
+        self.images = [Image() for _ in range(size)]
         self.dope(doping_size)
 
     def dope(self, doping_size):
