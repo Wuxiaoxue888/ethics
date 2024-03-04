@@ -1,6 +1,8 @@
 ### Authors: Adnan Al Medawer, Leo Hjulstrom, Lukas Toral, Xiaoxu Wu
 
 # Data source
+The real images come from the quickdraw dataset https://github.com/googlecreativelab/quickdraw-dataset. It consists of over 50 million simple drawings made by players in the game Quick, Draw! https://quickdraw.withgoogle.com/. The simplified 28x28 grayscale numpy bitmap images have been used for this project.
+The generator code is written in pure Python. The discriminator models have been written using Keras (https://keras.io/about/) and Tensorflow (https://www.tensorflow.org/learn). Some inspiration and minimal code snippets have been used from the book "Hands-On Machine Learning with Scikit-Learn, Keras, and TensorFlow, 2nd Edition, A. Géron, 2019, O'Reilly, ISBN: 9781492032649" and its corresponding github page (https://github.com/ageron/handson-ml2/blob/master/10_neural_nets_with_keras.ipynb)
 # Code description
 The source code of this project can be found in a GitHub repository https://github.com/Wuxiaoxue888/ethics. 
 ## Main idea
