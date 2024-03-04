@@ -29,13 +29,14 @@ class Population:
         :param doping_size: Declares how many real images will be doped in the population. The total size of population
         does not change.
         """
-        self.images = [Image() for _ in range(size - doping_size)]
-        self._dope(doping_size)
+        self.images = [Image() for _ in range(size)]
+        self.dope(doping_size)
 
-    def _dope(self, doping_size):
+    def dope(self, doping_size):
         """
         Dopes population with real images
         """
+        self.images = self.images[:-doping_size]
         for _ in range(doping_size):
             self.images.append(
                 Image(
@@ -47,7 +48,7 @@ class Population:
             )
 
     def print(self):
-        for image in self.images:
+        for image in self.images[:3]:
             print(image)
 
     def average_fitness(self):
@@ -100,7 +101,7 @@ class Population:
         for i in range(1, n_offsprings, 2):
             parent_1 = parents[i - 1]
             parent_2 = parents[i]
-            offspring_a, offspring_b = self._crossover(parent_1, parent_2)
+            offspring_a, offspring_b = self.crossover(parent_1, parent_2)
 
             mutate(offspring_a)
             mutate(offspring_b)
@@ -110,7 +111,7 @@ class Population:
             self.images[im_len - i] = offspring_b
 
     @staticmethod
-    def _crossover(parent_1, parent_2):
+    def crossover(parent_1, parent_2):
         """
         Checks all possible splits both horizontally and vertically and chooses the best one
         Splits the parents in two parts, combines one part from each parent, and returns them as offsprings

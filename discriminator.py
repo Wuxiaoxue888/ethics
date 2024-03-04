@@ -40,25 +40,19 @@ class Discriminator:
         generated_images["label"] = 0.0
 
         # Random subset of real images to train on
-        # real_images = REAL_IMAGES.sample(frac=1).reset_index(drop=True)[: len(generated_images)]
+        real_images = REAL_IMAGES.sample(frac=1).reset_index(drop=True)[: len(generated_images)]
 
         # Combine the real and fake images
-        # combined_images = pd.concat([real_images, generated_images], ignore_index=True)
-        # combined_images = combined_images.sample(frac=1).reset_index(drop=True)
+        combined_images = pd.concat([real_images, generated_images], ignore_index=True)
+        combined_images = combined_images.sample(frac=1).reset_index(drop=True)
 
-        features = generated_images.drop("label", axis=1)
-        labels = generated_images["label"]
+        features = combined_images.drop("label", axis=1)
+        labels = combined_images["label"]
 
         training_size = int(len(generated_images) * 0.8)
 
         X_test, X_train = features[training_size:], features[:training_size]
         y_test, y_train = labels[training_size:], labels[:training_size]
-
-        # Check the current accuracy of the model. if its high enough we should not train again
-        _, accuracy = random.choice(self.models).evaluate(X_test, y_test, verbose=None)
-        if accuracy > 0.9:
-            print(f"No training, accuracy is {accuracy}")
-            return
 
         # Train models again
         for i, model in enumerate(self.models):
