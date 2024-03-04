@@ -43,4 +43,4 @@ In our code there are three types of mutations:
 While selecting the mutation function, a random combination of the three functions is drawn and applied to the image's chromosome.
 Visualizations of how the different mutation functions behave can be found in the experimentation.ipynb notebook.
 # Results
- # TODO paste some images here
+![[image_1.png|400]]![[image_2.png|400]]![[image_3.png|400]]![[image_3_closest_real.png|400]]
