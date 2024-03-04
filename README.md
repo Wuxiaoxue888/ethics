@@ -38,7 +38,8 @@ As per good practise in genetic algorithms, mutations help introduce something n
 In our code there are three types of mutations:
 - type 1: A random pixel is selected. Its value is updated by a random amount. An adjacent pixel is then randomly chosen and its 		  value is updated by a similar amount as the first pixel. This process iteratively repeats 6-10 times.
 - type 2: A random pixel is selected. If the pixel is on the edge, it and neighbouring pixels are turned white. Else, if the pixel is 		  almost white (value lower than 0.4) it and neighbouring almost white pixels will be turned white. Otherwise, a black 			  straight line is drawn in the image.
-- type 3: A random portion of the image is turned white
+- type 3: A random portion of the image is turned white.
+
 While selecting the mutation function, a random combination of the three functions is drawn and applied to the image's chromosome.
 Visualizations of how the different mutation functions behave can be found in the experimentation.ipynb notebook.
 # Results
