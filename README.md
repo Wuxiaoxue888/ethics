@@ -45,6 +45,7 @@ In our code there are three types of mutations:
 While selecting the mutation function, a random combination of the three functions is drawn and applied to the image's chromosome.
 Visualizations of how the different mutation functions, and the crossover function behave can be found in the experimentation.ipynb notebook.
 # Results
+![Image](image_1.png)
 Here are 3 examples of our favorite generated images. The fourth image is the closest looking image in the real dataset for the third generated image. The first two examples are not that similar to any image in the real dataset. These results are from the 100th generation after running the program.
 Since we chose to use a lot of doping in order to get better results, the generated images are more similar to the real images than if less doping would be used. An automatic way to exclude generated images that are too much of a copy of a real image is recommended for future work. We have evaluated our results of this project by judging the final generated images ourselves, by how much we like them. For future work, the generated images should be evaluated using a more systematic approach with external evaluators, and be compared to some form of baseline model. The main challenge we see with the current implementation is the slow evolutionary process, caused by the slow evaluation of the populations by the discriminator. If the discriminator predictions could be sped up, it would allow for way more generations to be created, which is a key part of an evolutionary algorithm.
 
